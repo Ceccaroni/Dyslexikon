@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dyslexikon (CH-DE)</title>
+  <meta name="description" content="Offline-fähiges Wörterbuch für den Unterricht. Schweizer Orthografie, ohne externe Ressourcen." />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <!-- SVG-Sprite einmalig im DOM versteckt -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="icon-microphone-web-24" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-2.08A7 7 0 0 0 19 12h-2Z"/>
+    </symbol>
+  </svg>
+<header class="app-header" role="banner">
+  <div class="header-bar">
+    <h1>Dyslexikon <span class="badge">CH-DE</span></h1>
+    <div class="settings-wrapper">
+      <button id="btn-settings" class="btn btn-icon settings-toggle" type="button" aria-label="Einstellungen öffnen" aria-expanded="false" aria-controls="settings-panel">
+        <span class="burger" aria-hidden="true"></span>
+      </button>
+      <div id="settings-panel" class="settings-panel" role="region" aria-label="Einstellungen" hidden>
+        <div class="toggles">
+          <label class="switch">
+            <input id="toggle-dys" type="checkbox" />
+            <span>Dyslexie-Modus</span>
+          </label>
+          <label class="switch">
+            <input id="toggle-ruler" type="checkbox" />
+            <span>Leselineal</span>
+          </label>
+          <label class="switch">
+            <input id="toggle-contrast" type="checkbox" />
+            <span>Hoher Kontrast</span>
+          </label>
+          <label class="switch">
+            <input id="toggle-syll" type="checkbox" checked />
+            <span>Silben anzeigen</span>
+          </label>
+        </div>
+        <div class="sliders">
+          <label>
+            <span>Buchstabenabstand</span>
+            <input id="ls" type="range" min="0" max="12" step="1" value="3" />
+          </label>
+          <label>
+            <span>Zeilenhöhe</span>
+            <input id="lh" type="range" min="12" max="24" step="1" value="18" />
+          </label>
+        </div>
+        <div class="io">
+          <button id="btn-import" type="button" class="btn btn-secondary">Import</button>
+          <button id="btn-clear-user" type="button" class="btn btn-warning" title="Benutzerdaten löschen">Benutzerdaten leeren</button>
+          <input id="file" type="file" accept=".json,.csv,text/csv" hidden />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="search-row">
+    <label for="q" class="visually-hidden">Suche</label>
+    <input id="q" class="search" type="search" placeholder="Wort suchen…" autocomplete="off" />
+    <button id="btn-mic" class="btn btn-icon mic" type="button" aria-label="Sprachsuche starten/stoppen">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span class="icon" aria-hidden="true"></span>
+    </button>
+  </div>
+</header>
+
+<main id="results" class="results" role="main" aria-live="polite"></main>
+
+<section class="learn" aria-label="Lernwörter">
+  <div class="learn-head">
+    <h2>Lernwörter <span id="learn-count" class="badge">0</span></h2>
+  </div>
+  <ol id="learn-list" class="learn-list"></ol>
+  <div class="learn-actions">
+    <button id="learn-export-csv" type="button" class="btn btn-secondary">Export CSV</button>
+    <button id="learn-export-json" type="button" class="btn btn-secondary">Export JSON</button>
+    <button id="learn-clear" type="button" class="btn btn-warning" title="Liste leeren">Leeren</button>
+  </div>
+</section>
+
+<div id="ruler" class="ruler" hidden aria-hidden="true"></div>
+
+<footer class="app-footer" role="contentinfo">
+  <p>Schweizer Orthografie: ss statt ß. Keine externen Ressourcen. Daten bleiben lokal.</p>
+  <p><a href="README.md">Hinweise</a> · <a href="LICENSE">Lizenz</a></p>
+</footer>
+
+<script src="scripts/app.js?v=104"></script>
+<script type="module" src="/LegaWort/web/scripts/wortdb.shim.js"></script>
+</body>
+</html>
