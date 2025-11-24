@@ -1,84 +1,96 @@
-const BASE = "/LegaWort/public/data/defs";
+// Dyslexikon – Option A: lokale Definitionen
+// Basis: public/data/defs/<prefix>/<wort>.json
+const BASE = "public/data/defs";
 const TTL_DAYS = 180;
 const inflight = new Map(); // wort -> Promise
 
 function norm(s){
-  return (s||"").toLowerCase()
+  return (s || "")
+    .toLowerCase()
     .normalize("NFKC")
-    .replace(/ß/g,"ss")
-    .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue");
+    .replace(/ß/g, "ss")
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue");
 }
+
 function cacheKey(w){ return `def:${w}`; }
+
 function getCache(w){
-  try {
+  try{
     const raw = localStorage.getItem(cacheKey(w));
-    if (!raw) return null;
+    if(!raw) return null;
     const obj = JSON.parse(raw);
-    const age = (Date.now() - (obj.ts_cached||0)) / 86400000;
-    if (age > TTL_DAYS) return null;
+    const age = (Date.now() - (obj.ts_cached || 0)) / 86400000;
+    if(age > TTL_DAYS) return null;
     return obj;
-  } catch { return null; }
+  }catch{
+    return null;
+  }
 }
+
 function setCache(w, data){
-  try { localStorage.setItem(cacheKey(w), JSON.stringify({...data, ts_cached: Date.now()})); } catch {}
+  try{
+    localStorage.setItem(
+      cacheKey(w),
+      JSON.stringify({...data, ts_cached: Date.now()})
+    );
+  }catch{
+    // Storage voll oder deaktiviert – ignorieren
+  }
 }
+
 function defPath(w){
-  const n = norm(w);
-  const p = (n.slice(0,2).replace(/[^a-z]/g,"_") || "_");
-  const f = (n.replace(/[^a-z0-9_]/g,"_") || "_");
+  const n = norm(w);          // "Aachen" -> "aachen"
+  const p = (n.slice(0, 2) || "_"); // "aa"
+  const f = n || "_";         // "aachen"
   return `${BASE}/${p}/${f}.json`;
 }
+
 async function fetchLocalDef(w){
   const url = defPath(w);
   const res = await fetch(url, { cache: "force-cache" });
-  if (!res.ok) throw new Error(`404 ${url}`);
+  if(!res.ok) throw new Error(`404 ${url}`);
   return await res.json();
 }
 
-async function fetchRemoteDef(w){
-  throw new Error('remote lookup unavailable');
-}
-
 window.WortDB = window.WortDB || {};
-window.WortDB.getDefinition = async function (wort) {
-  const c = getCache(wort);
-  if (c) {
+
+window.WortDB.getDefinition = async function(wort){
+  // Cache-Hit?
+  const cached = getCache(wort);
+  if(cached){
     console.info("def cache hit", wort);
-    return c;
+    return cached;
   }
 
-  if (inflight.has(wort)) return inflight.get(wort);
+  if(inflight.has(wort)) return inflight.get(wort);
 
-  const p = (async () => {
-    try {
+  const p = (async ()=>{
+    try{
       const obj = await fetchLocalDef(wort);
       console.info("def local fetch", wort);
       setCache(wort, obj);
       return obj;
-    } catch {}
-
-    try {
-      const obj = await fetchRemoteDef(wort);
-      console.info("def remote fetch", wort);
-      setCache(wort, obj);
-      return obj;
-    } catch {}
-
-    return {
-      wort,
-      def_kid: null,
-      beispiele: [],
-      tags: [],
-      source: "none",
-      license: null,
-      ts_cached: Date.now(),
-    };
+    }catch(err){
+      console.warn("def local fetch failed", wort, err);
+      // Kein Remote-Fallback gemäss Option A
+      return {
+        wort,
+        def_kid: null,
+        beispiele: [],
+        tags: [],
+        source: "none",
+        license: null,
+        ts_cached: Date.now()
+      };
+    }
   })();
 
   inflight.set(wort, p);
-  try {
+  try{
     return await p;
-  } finally {
+  }finally{
     inflight.delete(wort);
   }
 };
