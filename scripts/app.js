@@ -2,7 +2,7 @@
    Keine externen Ressourcen, läuft auf GitHub Pages.
 */
 const state = {
-  data: [],            // kleiner Basis-Datensatz (optional)
+  data: [],            // Basis-Datensatz (derzeit ungenutzt)
   userData: [],        // lokale Importe
   voices: [],
   showSyll: true,
@@ -14,11 +14,12 @@ const state = {
   lastResults: [],
   lastQuery: '',
   learnWords: [],
-  // Grossdatensatz via Prefix-Chunks (optional)
-  chunkIndex: null,        // { prefixLen: 2, prefixes: { "aa": "aa.json", ... } }
-  chunkCache: new Map(),   // prefix -> Array<{wort,...}>
-  chunkPrefixLen: 2
+  // Option A: Prefix-Lemmata
+  prefixes: [],             // z.B. ["aa"]
+  lemmaCache: new Map(),    // prefix -> Array<{wort,silben,tags,...}>
+  prefixLen: 2
 };
+
 
 const $ = sel => document.querySelector(sel);
 const resultsEl = $('#results');
