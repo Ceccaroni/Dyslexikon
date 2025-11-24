@@ -415,22 +415,21 @@ async function ensureLemmaChunk(prefix){
 
 async function doSearch(input){
   const q = norm(input);
-  if(q.length < 2){ render([]); return; }
-
-  // Basis + User
-  let pool = state.data.concat(state.userData);
-
-  // Grosse Daten: passenden Chunk nachladen
-  if(state.chunkIndex){
-    const pref = q.slice(0, state.chunkPrefixLen);
-    const chunk = await ensureChunk(pref);
-    pool = pool.concat(chunk);
+  if(q.length < 2){
+    render([]);
+    return;
   }
 
-  // Direkte Treffer
+  let pool = (state.userData || []).slice();
+
+  const pref = q.slice(0, state.prefixLen);
+  if(pref && state.prefixes.includes(pref)){
+    const lemmas = await ensureLemmaChunk(pref);
+    pool = pool.concat(lemmas);
+  }
+
   const direct = pool.filter(it => norm(it.wort).includes(q));
 
-  // Kurz-Query-Heuristik (2–3 Zeichen): Wortanfang + Verwechslungsgruppen
   let shortHits = [];
   if(q.length <= 3){
     const rx = confusableStarts(q);
@@ -441,15 +440,13 @@ async function doSearch(input){
     shortHits = shortHits.concat(nearPrefix);
   }
 
-  // Fuzzy (allgemein, aber gedrosselt)
   const fuzzy = pool
     .map(it => ({ it, d: distance(q, norm(it.wort)) }))
-    .sort((a,b)=>a.d-b.d)
-    .filter(x => x.d > 0 && x.d <= Math.max(2, Math.floor(q.length/3)))
+    .sort((a,b) => a.d - b.d)
+    .filter(x => x.d > 0 && x.d <= Math.max(2, Math.floor(q.length / 3)))
     .slice(0, 24)
     .map(x => x.it);
 
-  // Mischen, Dedup, Limit
   const merged = [...new Set([...direct, ...shortHits, ...fuzzy])].slice(0, 24);
   render(merged, q);
 }
