@@ -378,29 +378,37 @@ function prefixDistance(a, word){
   return distance(a, b);
 }
 
-async function ensureChunk(prefix){
-  if(!state.chunkIndex) return [];
-  const p = prefix.toLowerCase();
-  if(state.chunkCache.has(p)) return state.chunkCache.get(p);
-  const file = state.chunkIndex.prefixes?.[p];
-  if(!file) { state.chunkCache.set(p, []); return []; }
+async function ensureLemmaChunk(prefix){
+  const p = (prefix || '').toLowerCase();
+  if(!p || !state.prefixes.includes(p)){
+    return [];
+  }
+  if(state.lemmaCache.has(p)){
+    return state.lemmaCache.get(p);
+  }
+
   try{
-    const res = await fetch(`data/_chunks/${file}`);
+    const res = await fetch(`public/index/${p}/lemmas.json`, { cache: 'force-cache' });
     if(!res.ok) throw new Error(res.status);
-    const obj = await res.json();
-    const list = Array.isArray(obj) ? obj.map(s=>({wort:String(s)})) : (obj.entries || obj || []);
-    const mapped = list.map(e => ({
-      wort: (e.wort||e.word||String(e)).replace(/ß/g,'ss').trim(),
-      silben: e.silben ? String(e.silben).split(/[-·\s]/).filter(Boolean) : [],
-      erklaerung: (e.erklaerung||e.definition||'').trim(),
-      beispiele: e.beispiele ? (Array.isArray(e.beispiele)?e.beispiele:String(e.beispiele).split(/\s*[|]\s*/).filter(Boolean)) : [],
-      tags: e.tags ? (Array.isArray(e.tags)?e.tags:String(e.tags).split(/\s*[,;]\s*/).filter(Boolean)) : []
-    })).filter(x=>x.wort);
-    state.chunkCache.set(p, mapped);
+
+    const raw = await res.json();
+    const list = Array.isArray(raw) ? raw : (raw.entries || []);
+    const mapped = list
+      .map(e => ({
+        wort: String(e.wort || '').replace(/ß/g,'ss').trim(),
+        silben: Array.isArray(e.silben) ? e.silben : [],
+        tags: Array.isArray(e.tags) ? e.tags : [],
+        erklaerung: '',
+        beispiele: []
+      }))
+      .filter(x => x.wort);
+
+    state.lemmaCache.set(p, mapped);
     return mapped;
+
   }catch(err){
-    console.warn('Chunk-Load fehlgeschlagen', p, err);
-    state.chunkCache.set(p, []);
+    console.warn('Prefix-Lemmata Laden fehlgeschlagen', p, err);
+    state.lemmaCache.set(p, []);
     return [];
   }
 }
