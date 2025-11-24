@@ -40,28 +40,22 @@ function clearSettingsPanelVars(){
 }
 
 (async function init(){
-  // Basisdaten (optional)
+  // Prefix-Index (Option A)
   try{
-    const res = await fetch('data/words.json');
-    if(res.ok){
-      const base = await res.json();
-      state.data = base.entries || [];
-    }
-  }catch(e){
-    console.warn('Kein Basis-Datensatz geladen', e);
-  }
-
-  // Chunk-Index (für grosse Listen, optional)
-  try{
-    const ci = await fetch('data/_chunks/index.json');
-    if(ci.ok){
-      state.chunkIndex = await ci.json(); // {prefixLen, prefixes:{..}}
-      if(typeof state.chunkIndex.prefixLen === 'number'){
-        state.chunkPrefixLen = state.chunkIndex.prefixLen;
+    const idxRes = await fetch('public/index/index.json', { cache: 'no-store' });
+    if(idxRes.ok){
+      const idx = await idxRes.json();
+      if(Array.isArray(idx.prefixes)){
+        state.prefixes = idx.prefixes;
       }
+      if(typeof idx.prefixLen === 'number'){
+        state.prefixLen = idx.prefixLen;
+      }
+    }else{
+      console.warn('Prefix-Index nicht gefunden (public/index/index.json).');
     }
   }catch(e){
-    // kein Chunk-Betrieb aktiv – OK
+    console.warn('Prefix-Index Laden fehlgeschlagen', e);
   }
 
   // Userdaten laden
