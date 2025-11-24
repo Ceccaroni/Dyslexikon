@@ -1,6 +1,10 @@
 /* Dyslexikon – WortDB Shim (Option A)
    Lädt Definitionen lokal aus:
    public/data/defs/<prefix>/<wort>.json
+
+   Keine Remote-Quellen.
+   Keine Fallbacks.
+   Keine Vermischung alter Strukturen.
 */
 
 window.WortDB = (function(){
@@ -8,14 +12,23 @@ window.WortDB = (function(){
   async function getDefinition(wort){
     if(!wort) return null;
 
-    const key = String(wort).toLowerCase().replace(/ß/g, 'ss');
-    const prefix = key.slice(0, 2);
+    const key = String(wort)
+      .toLowerCase()
+      .replace(/ß/g, 'ss')
+      .trim();
+
+    if(!key) return null;
+
+    const prefix = key.slice(0, 2); // aa, ab, ac …
 
     try{
       const res = await fetch(`public/data/defs/${prefix}/${key}.json`, {
         cache: 'force-cache'
       });
-      if(!res.ok) return null;
+
+      if(!res.ok){
+        return null;
+      }
 
       const def = await res.json();
 
@@ -27,7 +40,7 @@ window.WortDB = (function(){
       };
 
     }catch(e){
-      console.warn('Definition-Load fehlgeschlagen:', wort, e);
+      console.warn('Definition laden fehlgeschlagen:', wort, e);
       return null;
     }
   }
