@@ -2,21 +2,28 @@
    Lädt Definitionen lokal aus:
    public/data/defs/<prefix>/<wort>.json
 
-   Keine Remote-Quellen.
-   Keine Fallbacks.
-   Keine Vermischung alter Strukturen.
+   – Wortschlüssel wird CH-DE-normalisiert:
+     * toLowerCase
+     * ß -> ss
+     * ä -> ae, ö -> oe, ü -> ue
 */
 
 window.WortDB = (function(){
 
+  function normKey(wort){
+    return String(wort || '')
+      .toLowerCase()
+      .trim()
+      .replace(/ß/g, 'ss')
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue');
+  }
+
   async function getDefinition(wort){
     if(!wort) return null;
 
-    const key = String(wort)
-      .toLowerCase()
-      .replace(/ß/g, 'ss')
-      .trim();
-
+    const key = normKey(wort);
     if(!key) return null;
 
     const prefix = key.slice(0, 2); // aa, ab, ac …
